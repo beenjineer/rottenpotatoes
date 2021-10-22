@@ -7,7 +7,39 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
+    @all_ratings = Movie.all_ratings
+    redirect = false
+    if !(params[:ratings].nil?)
+      session[:ratings] = params[:ratings]
+    else
+      redirect = true
+    end
+    
+    if !(session[:ratings].nil?)
+      session[:ratings] = session[:ratings]
+    else
+      session[:ratings] = Hash[@all_ratings.map {|r| [r, true]}]
+    end
+    @ratings_to_show = session[:ratings]
+    
+    if params[:sort]
+      session[:sort] = params[:sort]
+    else
+      redirect = true
+    end
+    
+    if session[:sort]
+      session[:sort] = session[:sort]
+    else
+      session[:sort] = ""
+    end
+    @sort_method = session[:sort]
+    
+    if redirect
+      redirect_to movies_path({:sort=> @sort_method, :ratings=>@ratings_to_show})
+    end
+    
+    @movies = Movie.with_ratings(@ratings_to_show.keys).order(@sort_method)
   end
 
   def new
